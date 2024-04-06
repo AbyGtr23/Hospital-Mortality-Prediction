@@ -10,4 +10,4 @@ Our project aims to provide healthcare professionals with valuable insights to s
 In conclusion, our Hospital Mortality Prediction Project harnesses the power of SQL to analyze patient data and develop accurate predictive models for mortality risk. By leveraging SQL's analytical capabilities, we aim to empower healthcare professionals with actionable insights to enhance patient care and ultimately save lives.
 
 [Data Set](https://www.kaggle.com/datasets/mitishaagarwal/patient)
-
+[SQL Queries](SQL Queris & Problem Statements)
