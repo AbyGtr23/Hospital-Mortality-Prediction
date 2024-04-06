@@ -12,3 +12,5 @@ In conclusion, our Hospital Mortality Prediction Project harnesses the power of 
 [Data Set](https://www.kaggle.com/datasets/mitishaagarwal/patient)
 
 [SQL Queries](https://github.com/AbyGtr23/Hospital-Mortality-Prediction/blob/main/SQL%20Queris%20%26%20Problem%20Statements)
+
+[Google doc with Result Screenshots](https://docs.google.com/document/d/10utEl8e8s7nzOMkpxXadCvQ-fjmj1JZBNmwH6t_UknQ/edit?usp=sharing)
