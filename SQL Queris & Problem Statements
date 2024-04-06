@@ -1,0 +1,244 @@
+Q.1 How many total deaths occurred in the hospital and what was the percentage of the mortality rate?
+
+A.1 
+Select Count(CASE WHEN hospital_death=1 THEN 1 END) AS 'Total Hospital Deaths',
+CONCAT(CAST(ROUND(
+   CAST(
+       COUNT(CASE WHEN hospital_death = 1 THEN 1 END) AS DECIMAL(10, 2)
+   ) * 100 / CAST(COUNT(*) AS DECIMAL(10, 2)),
+   2
+)AS DECIMAL(10, 2))
+, '%') AS 'Mortality Rate'
+FROM [Hosp_Mortality Dataset];
+
+
+Q.2 What was the death count of each ethnicity?
+
+A.2 
+Select ethnicity as 'Ethnic Group', count(case when hospital_death = 1 then 1 End) as 'No. of Deaths'
+from [Hosp_Mortality Dataset]
+group by ethnicity;
+
+
+Q.3 What was the death count of each gender?
+
+A.3 
+Select (CASE
+       WHEN gender IS NULL THEN 'Not Specified'
+       ELSE gender
+   END ) as Gender, count(hospital_death) as 'Total Deaths'
+from [Hosp_Mortality Dataset]
+where hospital_death = 1
+group by gender;
+
+
+Q.4 Compare the average and max ages of patients who died and patients who survived.
+A.4 
+Select Round(avg(age), 2) as AVG_Age, max(age) as MAX_Age, hospital_death
+from [Hosp_Mortality Dataset]
+where hospital_death = '1'
+group by hospital_death
+union
+Select ROUND(avg(age), 2) as AVG_age, max(age) as MAX_Age, hospital_death
+from [Hosp_Mortality Dataset] #Contd. PTO
+where hospital_death = '0'
+group by hospital_death;
+
+
+Q.5 Compare the amount of patients that died and survived by each age.
+A.5 
+Select age as Age, Count(case when hospital_death='1' then 1 end) as 'Total No. Deaths', Count(case when hospital_death='0' then 1 end) as 'Total No. Survivors'
+from [Hosp_Mortality Dataset]
+group by age;
+
+
+Q.6 Age distribution of Patients in 10 year intervals.
+A.6 
+SELECT
+   CONCAT(FLOOR(age/10)*10, '-', FLOOR(age/10)*10+9) AS age_interval,
+   COUNT(*) AS patient_count
+FROM
+   [Hosp_Mortality Dataset]
+GROUP BY
+   FLOOR(age / 10)
+ORDER BY
+   FLOOR(age / 10);
+
+
+Q.7 Amount of patients above 65 who died vs Amount of patients between 50-65 who died.
+A.7 Select COUNT(Case when age > 65 and hospital_death = '1' then 1 end) as 'No. of Deaths(65 Above)',
+   COUNT(case when age between 55 and 65 and hospital_death = '0' then 1 end) as 'No. of Deaths (55-65)'
+From [Hosp_Mortality Dataset];
+
+
+Q.8 Calculate the average probability of hospital death for patients of different age groups.
+A.8 
+Select (case when age < 20 then '0-20'
+           when age > 20 and age < 40 then '20-40'
+           when age > 40 and age < 60 then '40-60'
+           when age > 60 and age < 80 then '60-80'
+           else '80 Above' end) as 'Age Group',
+   Round(avg(apache_4a_hospital_death_prob), 3) as 'Average Death Probability'
+from [Hosp_Mortality Dataset]
+group by case when age < 20 then '0-20'
+           when age > 20 and age < 40 then '20-40'
+           when age > 40 and age < 60 then '40-60'
+           when age > 60 and age < 80 then '60-80'
+           else '80 Above' end
+order by 'Age Group' asc;
+
+
+Q.9 Which admit source of the ICU did most patients die in and get admitted to?
+A.9 
+SELECT
+   top 1 icu_admit_source,
+   COUNT(case when hospital_death ='1' then 1 end) AS total_deaths,
+   COUNT(patient_id) AS total_admissions
+FROM
+   [Hosp_Mortality Dataset]
+GROUP BY
+   icu_admit_source
+ORDER BY
+   total_deaths DESC, total_admissions DESC;
+
+
+Q.10 Average age of people in each ICU admit source and amount that died.
+A.10 Select icu_admit_source as 'ICU Source', Round(avg(age), 2) as 'Avg. Age', COUNT(Case when hospital_death= '1' then 1 end) as 'No. of Deaths'
+from [Hosp_Mortality Dataset]
+group by icu_admit_source;
+
+
+Q.11 Average age of people in each type of ICU and amount that died.
+A.11 
+Select distinct icu_type as 'Admit Source',
+COUNT(case when hospital_death='1'then 1 end) as 'Deaths',
+avg(age) as 'average age'
+From [Hosp_Mortality Dataset]
+Group By icu_type;
+
+
+Q.12 Average weight, bmi, and max heart rate of people who died.
+A.12 
+Select Round(avg(weight), 2) as AVG_Age, Round(AVG(bmi), 2) as AVG_BMI, Avg(d1_heartrate_max) as 'AVG_Max Heart Rate'
+from [Hosp_Mortality Dataset]
+where hospital_death = '1';
+
+
+Q.13 What were the top 5 ethnicities with the highest BMI? 
+A.13 
+SELECT TOP 5 Ethnicity, Round(AVG(bmi), 2) AS avg_bmi
+FROM [Hosp_Mortality Dataset]
+GROUP BY Ethnicity
+ORDER BY avg_bmi DESC;
+
+
+Q.14 How many patients are suffering from each comorbidity?
+A.14 
+CREATE TABLE Comorbidities(
+   Comorbidity Text,
+   No_of_Patients INT
+   );
+  
+INSERT INTO Comorbidities(Comorbidity, No_of_Patients)
+   SELECT 'AIDS', SUM(case when aids ='1' then 1 else 0 end) FROM [Hosp_Mortality Dataset] UNION
+   SELECT 'Cirrhosis', SUM(case when cirrhosis = '1' then 1 else 0 end) FROM [Hosp_Mortality Dataset] UNION
+   SELECT 'Diabetes_Mellitus', SUM(case when diabetes_mellitus = '1' then 1 else 0 end) FROM [Hosp_Mortality Dataset] UNION
+   SELECT 'Hepatic Failure', SUM(case when hepatic_failure='1' then 1 else 0 end) FROM [Hosp_Mortality Dataset] UNION
+   SELECT 'Immunosuppression', SUM(case when immunosuppression='1' then 1 else 0 end) FROM [Hosp_Mortality Dataset] UNION
+   SELECT 'Leukemia', SUM(case when leukemia='1' then 1 else 0 end) FROM [Hosp_Mortality Dataset] UNION
+   SELECT 'Lymphoma', SUM(case when lymphoma='1' then 1 else 0 end) FROM [Hosp_Mortality Dataset] UNION
+   SELECT 'Solid Tumor with Metastasis', SUM(case when solid_tumor_with_metastasis='1' then 1 else 0 end) FROM [Hosp_Mortality Dataset];
+Select * From Comorbidities;
+
+
+Q.15 What was the percentage of patients with each comorbidity among those who died?
+A.15 
+SELECT ROUND(SUM( case when aids='1' then 1 else 0 end) * 100/COUNT(*), 2) as 'Death % of AIDS Patients',
+      ROUND(SUM( case when cirrhosis='1' then 1 else 0 end) * 100/COUNT(*), 2) as 'Death % of Cirrhosis Patients',
+      ROUND(SUM( case when diabetes_mellitus='1' then 1 else 0 end) * 100/COUNT(*), 2) as 'Death % of Diabetes Mellistus Patients',
+      ROUND(SUM( case when hepatic_failure='1' then 1 else 0 end) * 100/COUNT(*), 2) as 'Death % of Hepatic Failure Patients',
+      ROUND(SUM( case when immunosuppression='1' then 1 else 0 end) * 100/COUNT(*), 2) as 'Death % of Immunosupression Patients',
+      ROUND(SUM( case when leukemia='1' then 1 else 0 end) * 100/COUNT(*), 2) as 'Death % of Leukemia Patinets',
+      ROUND(SUM( case when lymphoma='1' then 1 else 0 end) * 100/COUNT(*), 2) as 'Death % of Lymphoma Patients',
+      ROUND(SUM( case when solid_tumor_with_metastasis='1' then 1 else 0 end) * 100/COUNT(*), 2) as 'Death % of Tumor Patients'
+FROM [Hosp_Mortality Dataset]
+WHERE hospital_death = '1';
+
+
+Q.16 What is the mortality rate in percentage?
+A.16 
+SELECT ROUND(sum(case when hospital_death ='1' then 1 else 0 end)*100/count(*), 2) as 'Mortality rate in %'
+FROM [Hosp_Mortality Dataset];
+
+
+
+
+Q.17 What was the percentage of patients who underwent elective surgery?
+A.17 
+SELECT sum(case when elective_surgery='1' then 1 else 0 end)*100/COUNT(*) as '% of Patients that underwent Elective Surgery'
+FROM [Hosp_Mortality Dataset];
+
+
+Q.18 What was the average weight and height for male & female patients who underwent elective surgery?
+A.18 
+Select ROUND(AVG(case when gender = 'M' then weight end), 2) as 'Avg weight(Male)',
+      ROUND(AVG(case when gender = 'M' then height end), 2) as 'Avg height(Male)',
+      ROUND(AVG(case when gender = 'F' then weight end), 2) as 'Avg weight(Female)',
+      ROUND(AVG(case when gender = 'F' then height end), 2) as 'Avg height(Female)'
+   FROM [Hosp_Mortality Dataset]
+   WHERE elective_surgery='1';
+
+
+Q.19 What were the top 10 ICUs with the highest hospital death probability?
+A.19 
+select top 10 icu_id as 'ICUs with highest hospital Death probability', apache_4a_hospital_death_prob as 'Hospital Death probability'
+From [Hosp_Mortality Dataset]
+group by icu_id, apache_4a_hospital_death_prob
+order by apache_4a_hospital_death_prob DESC;
+
+
+Q.20 What was the average length of stay at each ICU for patients who survived and those who didn't?
+Q.20 
+select icu_type as 'ICU TYPE',
+   Round(AVG(case when hospital_death='0' then pre_icu_los_days end), 2) as 'Avg stay of Patients who survived',
+   Round(AVG(case when hospital_death = '1' then pre_icu_los_days end), 2) as 'Avg stay of Patients who Died'
+from [Hosp_Mortality Dataset]
+group by icu_type
+order by icu_type;
+
+
+Q.21 What was the average BMI for patients that died based on ethnicity? (excluding missing or null values)
+A.21
+select ethnicity as 'Ethnicity', round(avg(bmi), 2) as 'Avg BMI'
+from [Hosp_Mortality Dataset]
+where hospital_death='1' and ethnicity is not NULL
+group by ethnicity;
+
+
+Q.22 What was the death percentage for each ethnicity?
+A.22 SELECT ethnicity as 'Ethnicity', CAST(
+       ROUND(
+           CAST(SUM(CASE WHEN hospital_death = '1' THEN 1 ELSE 0 END) AS FLOAT) * 100.0 / NULLIF(COUNT(*), 0)
+       , 2)
+   AS DECIMAL(10, 2)) AS 'Death %'
+FROM [Hosp_Mortality Dataset]
+GROUP BY ethnicity
+ORDER BY 'Death %' DESC;
+
+
+Q.23 Finding out how many patients are in each BMI category based on their BMI value
+A.23 
+SELECT COUNT(case when ROUND(bmi, 2) <18.5 then patient_id end) as Underweight,
+      COUNT(case when ROUND(bmi, 2) BETWEEN 18.5 and 25 then patient_id end) as Normal,
+      COUNT(case when ROUND(bmi, 2) BETWEEN 25 and 30 then patient_id end) as Overweight,
+      COUNT(case when ROUND(bmi, 2) > 30 then patient_id end) as Obese,
+      COUNT(case when bmi is null then patient_id end) as 'BMI Not Recorded'
+FROM [Hosp_Mortality Dataset];
+
+
+Q.24 Hospital death probabilities, bmi, patient id and their age where the ICU type is 'SICU' and BMI is above 30 in teenagers.
+A.24 
+SELECT patient_id, apache_4a_hospital_death_prob as 'Hospital Death Probability', age as Age
+FROM [Hosp_Mortality Dataset]
+WHERE icu_type = 'SICU' AND ROUND(bmi, 2) >30 AND age BETWEEN 10 AND 20
+ORDER BY age ASC;
